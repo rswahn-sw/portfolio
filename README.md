@@ -22,3 +22,22 @@ We were presented with several examples of projects we could do for this class, 
 
 Please note that while I personally had some self-learned programming experience with JavaScript, neither me or my partner were programmers at the time of the project. There is bound to be some weird things and potentially questionable decisions in our code that doesn't follow best practice. Regardless, I'm proud of the product we were able to deliver.
 AN IMPORTANT NOTE: You'll find that the security of the project is highly insecure. This is because we put all focus into making a working proof-of-concept model that would be improved on in the upcoming class: Security Hardening. 
+
+
+
+# Personal Projects
+
+## OverTheWire
+
+overthewire.org is a website hosting Wargames - community driven games to learn and practice security concepts in the form of fun-filled games. 
+There are several different games with different areas of focus, the vast majority of them contains machines you connect to over the internet to complete certain objectives. I will add the ones I've played and written walkthroughs on in their own separate directories.
+
+### Bandit
+
+Bandit is the first wargame aimed at absolute beginners which aims to teach basic Linux skills that is needed for the other wargames. 
+
+## Programming - JavaScript
+
+### Battleships
+
+This is a Battleships game I made with HTML and JavaScript, from the book "Head First JavaScript Programming - A Brain-Friendly Guide" by Eric Freeman & Elisabeth Robson. It's simple and unpolished, but it's playable.
