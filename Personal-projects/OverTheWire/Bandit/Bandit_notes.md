@@ -85,7 +85,7 @@ We can use any of these as filters for our search. I'm gonna go with option 2 si
 Let's break this down. 
 - find is the command we use that finds files.
 - the dot (".") lets it know we want to search this directory and all subdirectories within it.
-- -type f lets it know we are searching only for regular files. It works without it too, but this makes the search more exact.
+- -type f lets it know we are searching for a certain file type, specifically only regular files. It works without it too, but this makes the search more exact.
 - -size 1033c defines the search criteria as look for file size. 1033 is the size we're looking for, and the c defines the size as bytes specifically. 
 
 We find our file quickly and can use the ``file`` command to confirm it matches the other criteria as well. 
@@ -108,3 +108,68 @@ This time the file is somewhere in the entire machine, not just in a subdirector
 
 We only find two files now! We only have permission to read one, which contains our next password.
 
+# Level 7
+**Objective: Filter file contents**
+
+We have a single file presented to us; data.txt. It contains the password, the catch is that the file is HUGE and will take a very long time to read through. We do have a hint though:
+- The password is next to the world *millionth* in data.txt.
+
+This is exactly what the command *grep* is made for! We simply specify what information we're looking for, and what file we're searching, like so:
+``grep "millionth" data.txt``
+
+The reason millionth are in quotation marks is because we tell linux this is a *string*, not a command. We ran into this in Level 2 as well. Running the command easily gets us the password!
+
+# Level 8
+**Objective: Filter file contents (again)**
+
+Similar problem, but it won't be so easy this time. We don't know what line we're looking for in data.txt this time, but we that the password is on the **only** line that only occurs once in the file. So we're looking for a unique line, perfect for the *uniq* command! As you might've guessed, uniq looks for unique lines, but there's a catch: It doesn't work well when the lines are shuffled all over the place. So what do we do?
+
+## Introducing piping
+Linux is very handy in how it allows multiple commands to be run as one through *piping*. We send the output from one command into the next command and so can create a chain of events instead of doing it one at a time. 
+Before we run the uniq command, we need to sort the file. This might sound like it's time-consuming or will need editing of the file but linux got us covered there with the *sort* command.
+
+``sort -h data.txt | uniq -u`` 
+- the -h argument on sort means human-numeric-sort. Instead of a pure numeric sorting (the -n argument) we sort in a way that makes sense to humans. For this exercise, either will work fine.
+- | is the mark of the pipe. Everything to the left of it will be sent to the right side of it. If you do more than one pipe it will create blocks and will only send each block over to the next.
+- -u on uniq simply stands for unique. We want that unique line!
+
+# Level 9
+**Objective: Filter file contents (once again)**
+
+Another data.txt, another password. This time the file is filled with non-human-readable data, just a bunch of gibberish to a non-computer. What we know is that the password is in one of the human-readable lines in the file, preceded by several "=" characters. That's plenty of information to go on.
+By default, grep has trouble reading files that contains binary data, but there's a very handy argument to force it to process it as if it was just text; *-a* or *--text*.
+
+``grep -a "===" data.txt`` 
+For clarity, the other readable lines in the file contains:
+========== the
+========== password
+========== is
+followed by the password. Classy! 
+
+# Level 10
+**Objective: Decrypt file contents
+
+Forget the binary data, now we got base64 encoded data! Base64 is named from its 64 characters it uses to each represent a 6-bit segment of a sequence of bytes. This allows binary data to be transmitted through channels that only supports text. Of course, it can't be read while encoded so we need to decode it first. 
+The room hints that we may want to look into the *base64* command. Wouldn't you know it, there's a very simple argument that decodes data, just as the same command can encrypt it.
+
+``base64 -d data.txt``
+
+# Level 11
+**Objective Decrypt file contents (again)**
+
+This time, the encoding is different. The room tells us that all lowercase (a-z) and uppercase (A-Z) letters of data.txt have been rotated by 13 positions. 
+This is what's called a *caesar cipher*. It's been around for a very long time and as such, it's rather simple (but efficient). You rotate each character of the data x amounts of steps to the left or right of the alphabet. The "alphabet" in this case could include however many letters, numbers or characters you decide on beforehand but the principle is the same. We simply shift the characters back to their original position to get the cleartext. 
+
+In this case we know exactly what direction to shift it and how many steps (This variant of caesar cipher is called **ROT13** and was used by Julius Caesar himself! The ciphers unsurprisingly was developed in ancient Rome). These days there's a wide array of online tools to decrypt caesar ciphers easily even if you have no idea how many steps it's shifted, but we're gonna do it with only linux commands. It'll end up like this:
+
+``cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'``
+- First we read out the contents and pipe it to our next command
+- tr stands for translate, which takes two strings and replaces characters in the first string with corresponding characters in the second string. This is where it gets a bit complicated.
+- 'A-Za-z' targets all uppercase and lowercase letters. Remember our room description? Since this is a ROT13 cipher, ONLY letters are rotated so we wanna make sure we target only them and not any numbers or other characters. 
+- 'N-ZA-Mn-za-m' is our cipher description. A-Z from our previous string maps to N-ZA-M. We're telling tr "For each letter in A-Z, N should become Z and A should become M". This works great because ROT13 shifts letters 13 spaces, and the alphabet is 26 letters long so no matter what direction you shift it you'll end up with the original message. Obviously A-M is the first 13 letters in the alphabet and N-Z is the last 13, so we've told it to shift it 13 steps! Then we do the same with the lowercase letters. 
+
+## Personal notes
+This was the first level that took a bit of brainpower for me. Ceasar ciphers are simple and easy to understand, but the tr syntax took a while for my head to grasp. Maybe it was the lack of coffee. 
+I also learned the cat is unnecessary since tr can handle input on it's own by running: 
+``tr 'A-Za-z' 'N_ZA-Mn-za-m' < data.txt`` 
+But I thought it was nice to write it out in a way that's easier to understand. 
