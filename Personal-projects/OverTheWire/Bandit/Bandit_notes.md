@@ -173,3 +173,101 @@ This was the first level that took a bit of brainpower for me. Ceasar ciphers ar
 I also learned the cat is unnecessary since tr can handle input on it's own by running: 
 ``tr 'A-Za-z' 'N_ZA-Mn-za-m' < data.txt`` 
 But I thought it was nice to write it out in a way that's easier to understand. 
+
+# Level 12
+**Objective: Uncompressing files**
+
+We have a data.txt file which has compressed hexdata in it. It looks like this:
+00000000: 1f8b 0808 10da cf69 0203 6461 7461 322e  .......i..data2.
+00000010: 6269 6e00 0140 02bf fd42 5a68 3931 4159  bin..@...BZh91AY
+00000020: 2653 59e1 71be e800 0018 7fff dec6 ff7c  &SY.q..........|
+00000030: bd9f 4fbf ff77 ffff bfed af5d bffb dffd  ..O..w.....]....
+00000040: a8fa cfdf fbfb ffbb dd7f f5fb b001 3b18  ..............;.
+00000050: 1006 83d4 0340 d000 1934 0034 0006 81a0  .....@...4.4....
+00000060: 00d0 000d 0034 0d0c 8000 0d1a 3406 8068  .....4......4..h
+00000070: 69a6 4d1a 0d1b 48da 40da 3510 0003 4006  i.M...H.@.5...@.
+00000080: 8000 001e a00d 001e a680 3400 01a7 a800  ..........4.....
+00000090: 0680 c4d0 000d 1a3d 11ea 1a00 d343 f541  .......=.....C.A
+000000a0: a006 269a 03d4 0e9a 1a68 3434 340d 0d06  ..&......h444...
+000000b0: 8193 400c 8320 0340 3434 68d1 a000 68c4  ..@.. .@44h...h.
+000000c0: 6026 2000 1a06 2000 064d 000d 0000 6432  `& ... ..M....d2
+000000d0: 3c08 0200 4056 d394 6653 6796 5b22 e9b8  <...@V..fSg.["..
+000000e0: da82 c52c 0888 c1d0 6cee 6a43 f164 4a14  ...,....l.jC.dJ.
+000000f0: 6b4a 1d69 111a 91c1 93db ee12 8667 ca43  kJ.i.........g.C
+00000100: d036 43f6 3d4f 4999 6065 4091 9a2f bc4d  .6C.=OI.`e@../.M
+00000110: 6516 68e6 34ef a4ce 1091 b9ea 52a7 cf48  e.h.4.......R..H
+00000120: 3e4f 84c1 a2c5 2383 200a c41e 28ed 8e9b  >O....#. ...(...
+00000130: 7868 a526 970b 4041 054d 3b25 c0bb 6bdf  xh.&..@A.M;%..k.
+00000140: 1afe 9771 045e 3213 58a5 d129 9cd8 3dd8  ...q.^2.X..)..=.
+00000150: 9ca1 2561 c91b 1527 afc0 5643 0425 45ea  ..%a...'..VC.%E.
+00000160: dc87 cf98 2104 c30f 01ad 19fb 7e34 c0ba  ....!.......~4..
+00000170: 30e1 135a 743d f3d4 6467 cb43 9f4e 0cc1  0..Zt=..dg.C.N..
+00000180: 052a 12c1 55f3 2344 2254 b108 6571 016d  .*..U.#D"T..eq.m
+00000190: caab c4f6 8c3c e383 2e61 1088 490f 588b  .....<...a..I.X.
+000001a0: e6a4 e14a 8cc5 c226 9950 c091 3c2c 6ec5  ...J...&.P..<,n.
+000001b0: 7150 851a ac29 1272 422b 3c62 0da4 1bd7  qP...).rB+<b....
+000001c0: 605d 7981 aa02 332b bb27 9358 bac9 6ddc  `]y...3+.'.X..m.
+000001d0: 1aae 9848 0ff1 46cb c3a0 1f43 9871 0ef8  ...H..F....C.q..
+000001e0: 4429 ca3b 9fab 2e74 2b96 6f24 ad53 e4ad  D).;...t+.o$.S..
+000001f0: e247 28c8 86d4 0ec0 10ad 412a 0fec 11bc  .G(.......A*....
+00000200: 6cd6 3c01 ff5f 8f88 9247 582a 4d44 4942  l.<.._...GX*MDIB
+00000210: 92d2 5f6b 61d4 2d2b 5723 179d 98cc a44c  .._ka.-+W#.....L
+00000220: 951d c6c6 f143 2af1 5219 1fdd 3e81 8dc4  .....C*.R...>...
+00000230: c586 98f0 98e4 d5bd 910c f59a 0142 864b  .............B.K
+00000240: b8f2 08f3 65d4 9d5d 5e29 0130 fe7f c5dc  ....e..]^).0....
+00000250: 914e 1424 385c 6fba 0081 589d 8f40 0200  .N.$8\o...X..@..
+00000260: 00
+
+Overall unreadable, but there's a clue in there! The level description here reveals there's *multiple* compressions on this file. Notice the "data2.bin" at the top? This is an indicator of this and will be relevant later! 
+I had to explore the basic compressing tools included in linux for this assignment, but with some trial and error I took these steps. 
+
+## Step 1: xxd
+
+The xxd command creates hexdumps from files. Not unsurprisingly it also has an option to revert compressions, so we do just that. It's a simple manner of adding the revert argument and writing it to a new file:
+``xxd -r data.txt > unhexed.txt
+``
+The file is certainly uncompressed now, but is more unreadable than ever. This is because it's been converted back to binary and isn't human-readable. So what now?
+It's always a good idea to explore what you're dealing with when it comes to files. Linux is very accessible when it comes to this by running the `file` command. By running file on unhexed.txt we get an interesting output: 
+``unhexed.txt: gzip compressed data, was "data2.bin", last modified: Fri Apr  3 15:17:36 2026, max compression, from Unix, original size modulo 2^32 576
+``
+It's no longer a txt but a gzip file! That's the next compression form we need to focus on.
+
+## Step 2: gzip
+
+Let's start by making sure gzip recognizes the file for what it is. We rename the file:
+``mv unhexed.txt unhexed.gz`` 
+
+mv is also used to move files, and it the process you can rename it. Since we don't specify a path, we skip that step and just rename it. Now we can run a gzip decompression:
+``gzip unhexed.gz -d``
+
+What we get now is an unpacked file without the gzip extension, in fact it doesn't have any at all. Let's run file on it again and see what we get: 
+``unhexed: bzip2 compressed data, block size = 900k``
+
+## Step 3: bzip2
+
+You know the drill! We need to rename the file so bzip2 will recognize it, then start yet another decompression:
+``bzip2 -d unhexed.bz2`` 
+
+What do we end up with this time?
+``unhexed: gzip compressed data, was "data4.bin", last modified: Fri Apr  3 15:17:36 2026, max compression, from Unix, original size modulo 2^32 20480``
+
+## Step 4: gzip (again)
+
+We just repeat step 2 here, nothing new. It does yield a new result when looked at with file though:
+``unhexed: POSIX tar archive (GNU)``
+
+## Step 5: tar
+
+You know the process by now. Rename the file with the .tar extension and unpack it with:
+``tar -xf unhexed.tar``
+
+NOW things are getting interesting! We've used the name "unhexed" for these files we've uncompressed to. But now a new file has appeared with a name we haven't set ourselves: data5.bin. Remember how the file looked when we started? It had data2.bin in cleartext in there. If we look at it with file though, we'll find it's a another tar archive file. Let's rename it and run the same tar command on it before moving on.
+
+## Step 6: Repeating steps
+
+The remaining parts are repeated methods from step 2-5. We eventually get a file that's ASCII text and wouldn't you know it, we finally have our next password!
+
+# Level 13
+**Objective: Use a SSH key**
+
+So far we've used ssh connections using a username and a password. This time, we need to figure out how to use an ssh key to connect to the next level. 
