@@ -178,6 +178,7 @@ But I thought it was nice to write it out in a way that's easier to understand.
 **Objective: Uncompressing files**
 
 We have a data.txt file which has compressed hexdata in it. It looks like this:
+```
 00000000: 1f8b 0808 10da cf69 0203 6461 7461 322e  .......i..data2.
 00000010: 6269 6e00 0140 02bf fd42 5a68 3931 4159  bin..@...BZh91AY
 00000020: 2653 59e1 71be e800 0018 7fff dec6 ff7c  &SY.q..........|
@@ -217,6 +218,7 @@ We have a data.txt file which has compressed hexdata in it. It looks like this:
 00000240: b8f2 08f3 65d4 9d5d 5e29 0130 fe7f c5dc  ....e..]^).0....
 00000250: 914e 1424 385c 6fba 0081 589d 8f40 0200  .N.$8\o...X..@..
 00000260: 00
+```
 
 Overall unreadable, but there's a clue in there! The level description here reveals there's *multiple* compressions on this file. Notice the "data2.bin" at the top? This is an indicator of this and will be relevant later! 
 I had to explore the basic compressing tools included in linux for this assignment, but with some trial and error I took these steps. 
@@ -271,3 +273,57 @@ The remaining parts are repeated methods from step 2-5. We eventually get a file
 **Objective: Use a SSH key**
 
 So far we've used ssh connections using a username and a password. This time, we need to figure out how to use an ssh key to connect to the next level. 
+The level provides us with a private SSH key. Our first step is to copy it to our computer. The manual page for scp reads:
+```
+The source and target may be specified as a local pathname, a remote host with optional path in the form [user@]host:[path], or a URI in the form scp://[user@]host[:port][/path]. Local file names can be made explicit using absolute or relative pathnames to avoid scp treating file names containing ‘:’ as host specifiers.
+```
+
+Since we're SSH'd into a remote machine that we know have ports open, we quit the connection and use our local terminal to start a remote connection. There's some important things to note here:
+- The SCP protocol uses SSH as its default setting. Bandit uses a non-standard port for SSH, so we need to define that in our command.
+- Copying to certain folders might be denied due to lack of privileges. I run Windows 11 for this room and can't copy to C:\ so I will use my user folder instead (real name censored).
+
+The command we'll run looks like this:
+```
+scp scp://bandit13@bandit.labs.overthewire.org:2220/sshkey.private C:\Users\(MyUserName)
+```
+
+Since we're using an SSH connection, it'll prompt us for the same password we used to SSH into the machine. After that, the download will start and we'll have copied a file from a remote machine to our local machine!
+With SSH key in hand, we can connect to the next room by moving the the same directory that holds the downloaded key and running:
+```
+ssh -i .\sshkey.private bandit14@bandit.labs.overthewire.org -p 2220
+```
+
+Presto! We entered the same remote machine by using an ssh key for identification instead of a password!
+
+# Level 14
+**Objective: Connect to localhost port**
+
+Now that we've logged into the same remote machine as another user, we have permission to access a folder holding a password. We need to submit this password to port 30000 on localhost to receive the next password. 
+
+**OPTIONAL: What service is running?**
+So we know the port, but what's running there? This machine provides us with nmap, a port scanning tool with a variety of options so we can find out!
+
+## IMPORTANT NOTE
+```
+nmap is a troubleshooting tool that is also commonly used in ethical (and non-ethical) hacking. Running port-scanning tools without authorization on machines is a legal grey zone and could potentially lead to legal repercussions. Most enterprise networks have detection systems that could trigger alerts if their ports are scanned. In this case we only scan our own ports in a controlled lab environment.
+```
+
+We find out port 30000 runs "ndmps", the Network Data Management Protocol. 
+
+### Connecting
+
+We got several options here. The old-school way is to use telnet which certainly works, but comes with security concerns as the traffic is completely unencrypted which we want to avoid in at least 99% of cases. We will use Netcat which isn't completely security safe either, but at least it supports of encryption. Netcat can create listen ports, serve things like webpages or scripts on ports, or in our case connect to a port's service. The syntax for connecting to a port is very simple:
+
+```
+nc localhost 30000
+```
+
+We provide the password we found in our file and are rewarded with the next password in response!
+
+# Level 15
+**Objective: Connect to localhost port (with SSL/TLS)**
+
+The premise for this room is the same but kicked up a notch. We used telnet or nc for the last room, which is insecure. This time we'll use SSL/TLS which is encrypted traffic by default. SSL uses certificates for identification and since this is a local connection, we can create a certificate and sign it ourselves. 
+
+**NOTE:** This is not standard practice. There are trusted utilities for doing this such as mkcert. Making a self-signed certificate will certainly works but is considered insecure. If you use a web browser for the connection, it will warn you and ask if you really trust the certificate/certification authority before connecting. 
+
