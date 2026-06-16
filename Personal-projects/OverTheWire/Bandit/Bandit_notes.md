@@ -323,7 +323,13 @@ We provide the password we found in our file and are rewarded with the next pass
 # Level 15
 **Objective: Connect to localhost port (with SSL/TLS)**
 
-The premise for this room is the same but kicked up a notch. We used telnet or nc for the last room, which is insecure. This time we'll use SSL/TLS which is encrypted traffic by default. SSL uses certificates for identification and since this is a local connection, we can create a certificate and sign it ourselves. 
+The premise for this room is the same but kicked up a notch. SSL is notoriously complicated to use, made even harder from how it's been made more secure due to big cyberattack incidents. I will admit I have a hard time grasping the specifics, but in theory it's no different from Netcat. We enter a host we want to connect to and what port. The full command I used looks like this: 
 
-**NOTE:** This is not standard practice. There are trusted utilities for doing this such as mkcert. Making a self-signed certificate will certainly works but is considered insecure. If you use a web browser for the connection, it will warn you and ask if you really trust the certificate/certification authority before connecting. 
+```
+openssl s_client 127.0.0.1:30001
+```
+
+**NOTE:** The guide I used is from the third edition of OpenSSL Cookbook by Ivan Ristić. I stripped down unnecessary complexity from his example which might be needed when connecting to an actual remote server. Since we do this from localhost, it wasn't that complicated. 
+
+We get A LOT of diagnostics data output from using this command showing the certificate handshakes. When it's finished we are prompted for the password (the same one used to connect to this server) and receive the next one in response!
 
