@@ -333,3 +333,45 @@ openssl s_client 127.0.0.1:30001
 
 We get A LOT of diagnostics data output from using this command showing the certificate handshakes. When it's finished we are prompted for the password (the same one used to connect to this server) and receive the next one in response!
 
+# Level 16
+**Objective: Find the right SSL/TLS localhost port**
+
+This time, we need to repeat the last objective, only we only know the span of ports that has what we seek (port 31000 to 32000) and not the exact port. I actually did this with nmap in Level 14, not knowing it was gonna be an actual objective later. In that level, we scanned all ports but now that we have a specific span we can fine-tune our scan to only focus on those. 
+
+```
+nmap 127.0.0.1 -p 31000-32000 
+```
+
+We end up with 5 open ports all running unknown services. One of these will return our new password while the others will just return the one we entered. With such a low number of options, we could manually connect to each and see if we get a response, but let's see if we can reduce the number of likely ports.
+
+Open ports:
+- 31046
+- 31518
+- 31691
+- 31790
+- 31960
+
+I realized after running this that we can also use nmap to probe each open port to figure out what services are actually running there. 
+
+```
+nmap 127.0.0.1 -p 31000-32000 -sV
+```
+
+We recieve the following output:
+```
+PORT      STATE SERVICE     VERSION
+31046/tcp open  echo
+31518/tcp open  ssl/echo
+31691/tcp open  echo
+31790/tcp open  ssl/unknown
+31960/tcp open  echo
+```
+
+There we have it, 2 SSL ports. The one running ssl/unknown is definitely the most interesting and likely the one we're looking for since the others all have echo. We'll connect to it the same way we did last level:
+
+```
+openssl s_client 127.0.0.1:31790
+
+## IMPORTANT NOTE
+
+For some reason, inputting the correct password doesn't work for now. I've confirmed online that I've done it correct, but there seems to be a misconfiguration in the room as the password is rejected. For now, the level is unbeatable. 
