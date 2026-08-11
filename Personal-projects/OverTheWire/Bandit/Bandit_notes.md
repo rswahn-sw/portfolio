@@ -323,7 +323,7 @@ We provide the password we found in our file and are rewarded with the next pass
 # Level 15
 **Objective: Connect to localhost port (with SSL/TLS)**
 
-The premise for this room is the same but kicked up a notch. SSL is notoriously complicated to use, made even harder from how it's been made more secure due to big cyberattack incidents. I will admit I have a hard time grasping the specifics, but in theory it's no different from Netcat. We enter a host we want to connect to and what port. The full command I used looks like this: 
+The premise for this room is the same but kicked up a notch. While looking up how to do this I found that SSL is notoriously complicated to use, made even harder from how it's been made more secure due to big cyberattack incidents. I will admit I have a hard time grasping the specifics, but in theory it's no different from Netcat. We enter a host we want to connect to and what port. The full command I used looks like this: 
 
 ```
 openssl s_client 127.0.0.1:30001
@@ -371,7 +371,50 @@ There we have it, 2 SSL ports. The one running ssl/unknown is definitely the mos
 
 ```
 openssl s_client 127.0.0.1:31790
+```
 
-## IMPORTANT NOTE
+Now we get prompted for the password, but when entering it, the only returned value is "KEYUPDATE". Why is this? 
 
-For some reason, inputting the correct password doesn't work for now. I've confirmed online that I've done it correct, but there seems to be a misconfiguration in the room as the password is rejected. For now, the level is unbeatable. 
+### Openssl-s_client specifics
+
+If we go into the manual page for openssl-s_client we find the answer. This type of SSL connection has a couple of different modes it can connect with and unless specified it will default to the "basic mode". In this mode inputs are interactive; meaning that certain letters are bound to commands with different functions. When one of these letters are put in, everything after it is ignored and the command is run. Writing k runs the command "Send a key update message to the server" and wouldn't you know it, our password happened to start with a lower case k. 
+
+The manual page also describes the other modes. You can start in "advanced mode" with has even more options, but what we're looking for is to disable the interactive mode by using the -quiet command. The command for starting the connection will look like this: 
+```
+openssl s_client -quiet 127.0.0.1:31790
+```
+
+A lot less information gets dumped on us this time, including the prompt for a password. But as we know that's what it wants we can enter it anyway. This time the server will return the next password!
+
+# Level 17
+**Objective: Compare two files to find the changed line**
+
+We have two files in our home directory; passwords.new and passwords.old. One of the passwords has been changed from the old file to the new one. This is a simple case of using the diff command:
+```
+diff passwords.old passwords.new
+```
+
+# Level 18
+**Objective: Bypass automatic SSH logout**
+
+This level has the next password in a file named readme in the home directory. However, .bashrc has been modified to log us out as soon as we've logged in with SSH. How to solve this?
+
+We actually did solve this in an earlier level, we just have to think outside the box. If we can't manually access the file after connecting, we just have to make something fetch it for us while using the connection. Since we know the name of the file and exactly where it is, this is a perfect use case for scp! We use it the same way as in Level 13:
+```
+scp scp://bandit18@bandit.labs.overthewire.org:p:2220/readme C:\Users\(MyUserName)
+```
+After copying the file, we can easily access it on our own machine!
+
+# Level 19
+**Objective: Get file contents by raising permissions through setuid**
+
+Our home directory has an executable file named bandit20-do. While we can't read the script, it uses setuid to run whatever command is put into it as another user. The example provided is trying to run *whoami*, which displays what user you're currently logged in as. Running it as is returns **bandit19**. But if we execute the script with whoami as an argument, it returns **bandit20**.
+
+So what can we do with this? Different users have different home directories, but more importantly they have different *permissions*. Now that we're able to run commands with another users permissions, we could for instance look inside their home directory, something we can't usually do. 
+
+The OverTheWire/Bandit games have a folder that contains the passwords for all levels, but you only have permissions to read the levels you've already completed. Since we run commands as the user from the next user, we can just fetch the password for the next level right now:
+```
+./bandit20-do cat /etc/bandit_pass/bandit20
+```
+
+We're presented with the content of the file, something we won't be able to read without running it through the script.
