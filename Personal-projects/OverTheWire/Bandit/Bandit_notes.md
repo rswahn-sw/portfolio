@@ -418,3 +418,31 @@ The OverTheWire/Bandit games have a folder that contains the passwords for all l
 ```
 
 We're presented with the content of the file, something we won't be able to read without running it through the script.
+
+
+# Level 20
+**Objective: Use setuid script to connect to localhost port**
+
+I had some misconceptions about how this room was structured and had to get some help from an online guide. We have another script called *suconnect*. I was under the impression that this scripted worked by providing it a port number for a connection and then enter a password, but this is incorrect. It's hard to know exactly what the script does since we can't look at the code, but here's the description of the level:
+```
+There is a setuid binary in the homedirectory that does the following: it makes a connection to localhost on the port you specify as a commandline argument. It then reads a line of text from the connection and compares it to the password in the previous level (bandit20). If the password is correct, it will transmit the password for the next level (bandit21).
+
+**NOTE:** Try connecting to your own network daemon to see if it works as you think
+```
+
+So the password needs to be fed into the script but not as an argument while running it, but given through a port connection. What we do is start netcat listening on a port, like we've done in earlier levels. I used tmux to split the terminal view into separate instances, so I could start the nc listen and look at the feed while using another terminal instance to connect to it. We then add an echo of our password to it, like so;
+```
+echo -n '***PASSWORD***' | nc -l -p 1337
+```
+Now we just need to run the script towards that port:
+```
+./suconnect 1337
+```
+We get a confirmation of the string that has been read by the script, and that it does indeed match the password! The password for the next level shows up in our nc listen feed!
+
+
+# Level 21
+**Objective: Investigate automated process.**
+
+The level description tells us of a program that runs at regular intervals from cron, the time-based job scheduler and that we should investigate /etc/cron.d for what command is being executed.
+
